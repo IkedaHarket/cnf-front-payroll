@@ -1,8 +1,15 @@
 @import 'tailwindcss';
 
-/* Opcional: Estilos base */
+@theme {
+  /* Colores corporativos Confuturo */
+  --color-brand-red: #ff4438;
+  --color-brand-dark: #d63025;
+  --color-brand-blue: #002f5d; /* Azul institucional para dar seriedad */
+}
+
 html,
 body {
   height: 100%;
   background-color: #f8fafc;
+  font-family: 'Inter', sans-serif;
 }

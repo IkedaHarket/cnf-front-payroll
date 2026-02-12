@@ -1,59 +1,85 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { NotificationService, PayrollService } from '@services/index';
 import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-upload-page',
-  imports: [CommonModule, FormsModule],
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './upload-page.html',
-  styleUrl: './upload-page.css',
 })
 export class UploadPage {
   private payrollService = inject(PayrollService);
+  private notificationService = inject(NotificationService);
 
-  // Signals for reactive state
   isLoading = signal(false);
-  selectedFile: File | null = null;
-  isDragging = false;
+  selectedFile = signal<File | null>(null);
+  isDragging = signal(false);
 
-  onFileSelected(event: any) {
-    this.selectedFile = event.target.files[0];
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files?.length) {
+      this.validateAndSetFile(input.files[0]);
+    }
+    input.value = ''; // Reset para permitir re-selección
   }
 
-  // Drag & Drop handlers
-  onDragOver(e: Event) {
+  onDragOver(e: DragEvent) {
     e.preventDefault();
-    this.isDragging = true;
+    this.isDragging.set(true);
   }
-  onDragLeave(e: Event) {
+
+  onDragLeave(e: DragEvent) {
     e.preventDefault();
-    this.isDragging = false;
+    this.isDragging.set(false);
   }
-  onDrop(e: any) {
+
+  onDrop(e: DragEvent) {
     e.preventDefault();
-    this.isDragging = false;
-    if (e.dataTransfer.files.length > 0) {
-      this.selectedFile = e.dataTransfer.files[0];
+    this.isDragging.set(false);
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      this.validateAndSetFile(files[0]);
     }
   }
 
+  private validateAndSetFile(file: File) {
+    // Validación estricta de extensión para Banco Estado
+    if (!file.name.toLowerCase().endsWith('.txt')) {
+      this.notificationService.showError('Formato no permitido. Solo se aceptan archivos .txt');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      // Límite de 10MB
+      this.notificationService.showError('El archivo es demasiado pesado (máx 10MB)');
+      return;
+    }
+
+    this.selectedFile.set(file);
+    this.notificationService.showSuccess('Archivo cargado correctamente');
+  }
+
   clearFile() {
-    this.selectedFile = null;
+    this.selectedFile.set(null);
   }
 
   onSubmit() {
-    if (!this.selectedFile) return;
+    const file = this.selectedFile();
+    if (!file) return;
 
     this.isLoading.set(true);
 
     this.payrollService
-      .uploadPayroll(this.selectedFile)
+      .uploadPayroll(file)
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
-        next: (res) => alert(res.message), // In real app, use Toast Service
-        error: (err) => alert('Error: ' + err.message),
+        next: () => {
+          this.notificationService.showSuccess('Nómina enviada exitosamente');
+          this.clearFile();
+        },
+        error: (err) => this.notificationService.showError('Error en el envío: ' + err.message),
       });
   }
 }
