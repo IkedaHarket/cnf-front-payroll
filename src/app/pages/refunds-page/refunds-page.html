@@ -1,0 +1,136 @@
+<div class="animate-fade-in mt-6">
+      
+      <!-- Panel de Filtros -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-6">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+          <!-- Filtro: Convenio -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Convenio</label>
+            <select class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-[#FF4438] outline-none shadow-sm cursor-pointer transition-colors">
+              <option value="">Todos los convenios</option>
+              <option value="proveedores">Pago Proveedores</option>
+              <option value="pensiones">Pensiones</option>
+            </select>
+          </div>
+
+          <!-- Filtro: Rango de Fechas -->
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Rango Fecha de Pago</label>
+            <div class="flex items-center gap-3">
+              <input type="date" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-[#FF4438] outline-none shadow-sm text-slate-600">
+              <span class="text-slate-400 font-medium">-</span>
+              <input type="date" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-[#FF4438] outline-none shadow-sm text-slate-600">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+          
+          <!-- Filtro: Estados (Checkboxes) -->
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Estados a consultar</label>
+            <div class="flex flex-wrap gap-6">
+              <label class="flex items-center gap-2 cursor-pointer group select-none">
+                <input type="checkbox" class="w-4 h-4 text-[#FF4438] border-gray-300 rounded focus:ring-[#FF4438] cursor-pointer accent-[#FF4438]">
+                <span class="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">Aceptado (A)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer group select-none">
+                <input type="checkbox" class="w-4 h-4 text-[#FF4438] border-gray-300 rounded focus:ring-[#FF4438] cursor-pointer accent-[#FF4438]" checked>
+                <span class="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">Aceptado Parcial (AP)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer group select-none">
+                <input type="checkbox" class="w-4 h-4 text-[#FF4438] border-gray-300 rounded focus:ring-[#FF4438] cursor-pointer accent-[#FF4438]">
+                <span class="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">Pendiente (PC)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Botón Buscar -->
+          <div class="flex justify-end">
+            <button 
+              (click)="loadData()" 
+              class="bg-slate-800 text-white px-8 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-900 transition-colors shadow-sm active:scale-95 transform duration-150 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              Buscar Rendiciones
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de Resultados -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px] relative">
+        
+        <!-- Estado de Carga -->
+        @if (isLoading()) {
+          <div class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center backdrop-blur-sm transition-all duration-300">
+            <div class="flex flex-col items-center gap-3">
+              <svg class="animate-spin h-8 w-8 text-[#FF4438]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              <span class="text-sm text-slate-500 font-medium animate-pulse">Consultando Banco Estado...</span>
+            </div>
+          </div>
+        }
+
+        <table class="min-w-full divide-y divide-slate-100">
+          <thead class="bg-slate-50/50">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ID Pago</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha Pago</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Monto</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Detalles</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Estado</th>
+              <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (item of data(); track item.id) {
+              <tr class="hover:bg-slate-50 transition-colors group">
+                <td class="px-6 py-4 text-sm font-medium text-slate-900">#{{ item.id }}</td>
+                <td class="px-6 py-4 text-sm text-slate-500">{{ item.paymentDate }}</td>
+                <td class="px-6 py-4 text-sm font-semibold text-slate-900">
+                  {{ item.amount | currency:'CLP':'symbol-narrow' }}
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-500 max-w-xs truncate" title="{{ item.details }}">
+                  {{ item.details }}
+                </td>
+                <td class="px-6 py-4">
+                  <!-- Badges de Estado -->
+                  <span [ngClass]="{
+                    'bg-green-100 text-green-700 border-green-200': item.status === 'A',
+                    'bg-orange-100 text-orange-700 border-orange-200': item.status === 'AP',
+                    'bg-slate-100 text-slate-600 border-slate-200': item.status === 'PC'
+                  }" class="px-2.5 py-1 rounded-full text-xs font-bold border inline-flex items-center gap-1.5 shadow-sm">
+                    @if(item.status === 'A') { <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> }
+                    @if(item.status === 'AP') { <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> }
+                    @if(item.status === 'PC') { <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> }
+                    
+                    @switch (item.status) {
+                      @case ('A') { Aceptado }
+                      @case ('AP') { Aceptado Parcial }
+                      @case ('PC') { Pendiente }
+                    }
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                   <button class="text-slate-400 hover:text-[#FF4438] transition-colors p-2 rounded-full hover:bg-red-50" title="Ver Comprobante">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                   </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="px-6 py-16 text-center">
+                  <div class="flex flex-col items-center justify-center">
+                    <div class="bg-slate-50 p-4 rounded-full mb-3">
+                       <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <h3 class="text-slate-900 font-medium">No se encontraron rendiciones</h3>
+                    <p class="text-slate-500 text-sm mt-1">Prueba ajustando los filtros de fecha o estado.</p>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
