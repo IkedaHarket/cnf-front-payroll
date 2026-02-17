@@ -24,9 +24,9 @@ export class RefundsPage {
   loadData() {
     this.isLoading.set(true);
     // Simulamos paso de filtros
-    this.payrollService
-      .getSettlements({})
-      .pipe(finalize(() => this.isLoading.set(false)))
-      .subscribe((res) => this.data.set(res));
+    // this.payrollService
+    //   .getSettlements({})
+    //   .pipe(finalize(() => this.isLoading.set(false)))
+    //   .subscribe((res) => this.data.set(res));
   }
 }

@@ -1,23 +1,70 @@
-import { Injectable } from '@angular/core';
-import { ApiResponse } from '@interfaces/api';
+import { inject, Injectable, signal, WritableSignal } from '@angular/core';
+import { DataWithStatus, UploadPayrollResponse } from '@interfaces/api';
 import { Payroll, Settlement } from '@interfaces/domain';
-import { Observable, of, timer } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, delay, map, tap } from 'rxjs/operators';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class PayrollService {
-  // Simulate file upload
-  uploadPayroll(file: File): Observable<ApiResponse<null>> {
-    return timer(2000).pipe(
-      // 2s network delay
-      map(() => {
-        return {
+  private readonly apiUrl = `${environment.api.url}payroll`;
+
+  private readonly _http = inject(HttpClient);
+
+  private readonly newPayroll = signal<DataWithStatus<Payroll | null>>({
+    success: false,
+    data: null,
+    loading: true,
+    error: false,
+  });
+
+  uploadPayroll(file: File): Observable<DataWithStatus<Payroll | null>> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    this.newPayroll.update((state) => ({ ...state, loading: true, error: false }));
+
+    return this._http.post<UploadPayrollResponse>(`${this.apiUrl}`, formData).pipe(
+      map((res) => {
+        this.newPayroll.set({
+          loading: false,
+          error: false,
           success: true,
-          data: null,
-          message: 'Nómina cargada exitosamente al servidor seguro.',
-        };
+          data: {
+            id: res.id,
+            internalCode: res.internalCode,
+            agreement: res.agreementNumber,
+            amount: res.totalAmount,
+            sentDate: res.createdAt,
+            status: 'sent',
+          },
+        });
+        return this.newPayroll();
       }),
+      catchError((err) => this._processError(err, this.newPayroll)),
     );
+  }
+
+  private _processError<T>(
+    error: HttpErrorResponse,
+    targetSignal: WritableSignal<DataWithStatus<T | null>>,
+  ): Observable<DataWithStatus<T | null>> {
+    const errorRes: DataWithStatus<null> = {
+      success: false,
+      data: null,
+      message: error.error?.message || 'Error de conexión con el servicio de salud',
+      loading: false,
+      error: true,
+    };
+
+    targetSignal.set({ ...errorRes });
+
+    return of(errorRes);
+  }
+
+  getSettlements(filters: any): Observable<DataWithStatus<Settlement[]>> {
+    return this._http.post<DataWithStatus<Settlement[]>>(`${this.apiUrl}/get-settlements`, filters);
   }
 
   // Get history
@@ -26,71 +73,28 @@ export class PayrollService {
       {
         id: '1',
         internalCode: 'NOM-2026-001',
-        sentDate: '2026-02-12',
-        agreement: 'Proveedores',
+        sentDate: new Date('2026-02-10'),
+        agreement: 123,
         amount: 14500000,
         status: 'sent',
       },
       {
         id: '2',
         internalCode: 'NOM-2026-002',
-        sentDate: '2026-02-11',
-        agreement: 'Pensiones',
+        sentDate: new Date('2026-02-10'),
+        agreement: 123,
         amount: 8500000,
         status: 'processed',
       },
       {
         id: '3',
         internalCode: 'NOM-2026-003',
-        sentDate: '2026-02-10',
-        agreement: 'Honorarios',
+        sentDate: new Date('2026-02-10'),
+        agreement: 123,
         amount: 2300000,
         status: 'error',
       },
     ];
     return of(mockData).pipe(delay(800));
-  }
-
-  // Get Settlements (Updated Mock)
-  getSettlements(filters: any): Observable<Settlement[]> {
-    const mockData: Settlement[] = [
-      {
-        id: '8821',
-        paymentDate: '2026-02-12',
-        amount: 120000,
-        status: 'A',
-        details: 'Abono en cuenta rut exitoso',
-      },
-      {
-        id: '8822',
-        paymentDate: '2026-02-12',
-        amount: 45000,
-        status: 'PC',
-        details: 'Cuenta destino bloqueada por banco',
-      },
-      {
-        id: '8823',
-        paymentDate: '2026-02-11',
-        amount: 890000,
-        status: 'A',
-        details: 'Pago masivo procesado',
-      },
-      {
-        id: '8824',
-        paymentDate: '2026-02-10',
-        amount: 2500000,
-        status: 'AP',
-        details: 'Fondos insuficientes parciales',
-      },
-      {
-        id: '8825',
-        paymentDate: '2026-02-10',
-        amount: 12500,
-        status: 'A',
-        details: 'Pago servicio externo',
-      },
-    ];
-    // Simulamos un delay un poco mayor para ver el loader
-    return of(mockData).pipe(delay(1200));
   }
 }

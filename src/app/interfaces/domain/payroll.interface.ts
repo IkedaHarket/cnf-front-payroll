@@ -1,8 +1,8 @@
 export interface Payroll {
   id: string;
   internalCode: string;
-  sentDate: string;
-  agreement: string;
+  sentDate: Date;
+  agreement: number;
   amount: number;
   status: 'sent' | 'processed' | 'error';
 }

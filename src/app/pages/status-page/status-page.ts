@@ -11,18 +11,22 @@ import { finalize } from 'rxjs';
   styleUrl: './status-page.css',
 })
 export class StatusPage {
-  payrollService = inject(PayrollService);
+  private payrollService = inject(PayrollService);
+
   isLoading = signal(true);
   data = signal<Payroll[]>([]);
 
-  constructor() {
-    this.loadData();
-  }
-
   loadData() {
-    this.payrollService
-      .getHistory()
-      .pipe(finalize(() => this.isLoading.set(false)))
-      .subscribe((res) => this.data.set(res));
+    // this.payrollService
+    //   .getHistory()
+    //   .pipe(finalize(() => this.isLoading.set(false)))
+    //   .subscribe({
+    //     next: (res) => {
+    //       if (res.success) {
+    //         this.data.set(res.data); // Extraemos la data del sobre DataWithStatus
+    //       }
+    //     },
+    //     error: () => this.data.set([]),
+    //   });
   }
 }
