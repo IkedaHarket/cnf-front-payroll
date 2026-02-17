@@ -67,7 +67,6 @@ export class PayrollService {
     return this._http.post<DataWithStatus<Settlement[]>>(`${this.apiUrl}/get-settlements`, filters);
   }
 
-  // Get history
   getHistory(): Observable<Payroll[]> {
     const mockData: Payroll[] = [
       {
