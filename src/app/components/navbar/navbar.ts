@@ -1,14 +1,14 @@
-import { CommonModule } from '@angular/common';
+// src/app/components/navbar/navbar.ts
 import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { HealthService } from '@services/index';
-import { catchError, interval, map, of, startWith, switchMap, tap } from 'rxjs';
+import { interval, of } from 'rxjs';
+import { startWith, switchMap, map, catchError } from 'rxjs/operators';
+import { HealthService } from '@services/health-service';
 
 @Component({
   selector: 'app-navbar',
-  imports: [CommonModule],
   templateUrl: './navbar.html',
-  styleUrl: './navbar.css',
+  standalone: true,
 })
 export class NavbarComponent {
   private readonly _healthService = inject(HealthService);

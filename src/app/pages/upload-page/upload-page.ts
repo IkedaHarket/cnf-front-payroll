@@ -1,7 +1,7 @@
+// src/app/pages/upload-page/upload-page.ts
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { NotificationService, PayrollService } from '@services/index';
-import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-upload-page',
@@ -13,16 +13,32 @@ export class UploadPage {
   private payrollService = inject(PayrollService);
   private notificationService = inject(NotificationService);
 
-  isLoading = signal(false);
+  // Exponemos el estado del servicio al template
+  uploadState = this.payrollService.uploadState;
+
+  // Estados locales solo para UI
   selectedFile = signal<File | null>(null);
   isDragging = signal(false);
+
+  constructor() {
+    // Efecto reactivo para notificaciones automáticas según el estado
+    effect(() => {
+      const state = this.uploadState();
+      if (state.status === 'success') {
+        this.notificationService.showSuccess('Nómina procesada exitosamente');
+        this.selectedFile.set(null);
+      } else if (state.status === 'error') {
+        this.notificationService.showError(`Error al procesar la nómina: ${state.error}`);
+      }
+    });
+  }
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
       this.validateAndSetFile(input.files[0]);
     }
-    input.value = ''; // Reset para permitir re-selección
+    input.value = '';
   }
 
   onDragOver(e: DragEvent) {
@@ -39,47 +55,33 @@ export class UploadPage {
     e.preventDefault();
     this.isDragging.set(false);
     const files = e.dataTransfer?.files;
-    if (files && files.length > 0) {
+    if (files?.length) {
       this.validateAndSetFile(files[0]);
     }
   }
 
   private validateAndSetFile(file: File) {
-    // Validación estricta de extensión para Banco Estado
+    this.payrollService.clearState();
     if (!file.name.toLowerCase().endsWith('.txt')) {
-      this.notificationService.showError('Formato no permitido. Solo se aceptan archivos .txt');
+      this.notificationService.showError('Solo se aceptan archivos .txt');
       return;
     }
-
     if (file.size > 10 * 1024 * 1024) {
-      // Límite de 10MB
-      this.notificationService.showError('El archivo es demasiado pesado (máx 10MB)');
+      this.notificationService.showError('El archivo excede los 10MB');
       return;
     }
-
     this.selectedFile.set(file);
-    this.notificationService.showSuccess('Archivo cargado correctamente');
   }
 
   clearFile() {
     this.selectedFile.set(null);
+    this.payrollService.clearState();
   }
 
   onSubmit() {
     const file = this.selectedFile();
-    if (!file) return;
-
-    this.isLoading.set(true);
-
-    this.payrollService
-      .uploadPayroll(file)
-      .pipe(finalize(() => this.isLoading.set(false)))
-      .subscribe({
-        next: () => {
-          this.notificationService.showSuccess('Nómina enviada exitosamente');
-          this.clearFile();
-        },
-        error: (err) => this.notificationService.showError('Error en el envío: ' + err.message),
-      });
+    if (file) {
+      this.payrollService.uploadPayroll(file);
+    }
   }
 }

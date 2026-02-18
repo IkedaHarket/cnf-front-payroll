@@ -1,7 +1,6 @@
-export interface DataWithStatus<T> {
+export interface ApiResponse<T> {
   success: boolean;
-  loading: boolean;
-  error: boolean;
+  message: string;
   data: T;
-  message?: string;
+  errors: string[] | null;
 }
