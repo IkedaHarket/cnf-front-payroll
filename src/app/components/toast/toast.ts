@@ -4,11 +4,13 @@ import { NotificationService } from '@services/index';
 
 @Component({
   selector: 'app-toast',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './toast.html',
   styleUrl: './toast.css',
 })
 export class ToastComponent {
-  notificationService = inject(NotificationService);
-  toast = this.notificationService.toast;
+  public notificationService = inject(NotificationService);
+
+  public toasts = this.notificationService.toasts;
 }

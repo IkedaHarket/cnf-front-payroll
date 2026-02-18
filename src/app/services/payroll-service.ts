@@ -1,40 +1,42 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { environment } from '../../environments/environment';
 import { ApiResponse, UploadPayrollResponse } from '../interfaces/api';
-import { DataWithStatus } from '@interfaces/domain';
+import { catchError, map, throwError } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class PayrollService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.api.url}payroll`;
 
-  public uploadState = signal<DataWithStatus<UploadPayrollResponse>>(DataWithStatus.idle());
+  private fileToUpload = signal<File | null>(null);
+
+  public uploadResource = rxResource({
+    params: () => this.fileToUpload() ?? undefined,
+    stream: ({ params: file }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      return this.http.post<ApiResponse<UploadPayrollResponse>>(this.apiUrl, formData).pipe(
+        map((res) => {
+          if (!res.success) throw new Error(res.message);
+          return res.data;
+        }),
+        catchError((err: HttpErrorResponse) => {
+          const apiError = err.error as ApiResponse<null>;
+          const errorMessage = apiError?.message || 'Error con el servidor';
+          return throwError(() => new Error(errorMessage));
+        }),
+      );
+    },
+  });
 
   uploadPayroll(file: File) {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    this.uploadState.set(DataWithStatus.loading(this.uploadState().data));
-
-    this.http.post<ApiResponse<UploadPayrollResponse>>(this.apiUrl, formData).subscribe({
-      next: (res) => {
-        if (res.success) {
-          this.uploadState.set(DataWithStatus.success(res.data));
-        } else {
-          this.uploadState.set(DataWithStatus.error(res.message));
-        }
-      },
-      error: (err: HttpErrorResponse) => {
-        console.log(err);
-        const apiError = err.error as ApiResponse<null>;
-        console.log({ apiError });
-        this.uploadState.set(DataWithStatus.error(apiError?.message || 'Error de conexión'));
-      },
-    });
+    this.fileToUpload.set(file);
   }
 
   clearState() {
-    this.uploadState.set(DataWithStatus.idle());
+    this.fileToUpload.set(null);
   }
 }

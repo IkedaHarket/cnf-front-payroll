@@ -1,9 +1,11 @@
 <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-    
     <div class="flex items-center gap-2 sm:gap-3">
-      <img src="https://confuturo.cdn.modyo.com/uploads/8b600de0-361e-44a4-a3e3-731d12c53af1/original/logo-confuturo.jpg" 
-           alt="Confuturo" class="h-8 sm:h-10 w-auto object-contain">
+      <img
+        src="https://confuturo.cdn.modyo.com/uploads/8b600de0-361e-44a4-a3e3-731d12c53af1/original/logo-confuturo.jpg"
+        alt="Confuturo"
+        class="h-8 sm:h-10 w-auto object-contain"
+      />
       <div class="h-6 w-px bg-slate-300 mx-1 sm:mx-2"></div>
       <span class="text-slate-500 text-xs sm:text-sm font-medium">Portal de Nóminas</span>
     </div>
@@ -11,15 +13,18 @@
     <div class="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider">
       <div class="flex items-center gap-1.5">
         <span class="text-slate-400">Servidor:</span>
-        <div [class]="status().backend ? 'bg-green-500' : 'bg-red-500'" 
-             class="h-2 w-2 rounded-full shadow-sm transition-colors duration-500"></div>
+        <div
+          [ngClass]="status()?.backend ? 'bg-green-500' : 'bg-red-500'"
+          class="h-2 w-2 rounded-full shadow-sm transition-colors duration-500"
+        ></div>
       </div>
       <div class="flex items-center gap-1.5">
         <span class="text-slate-400">Banco:</span>
-        <div [class]="status().bancoEstado ? 'bg-green-500' : 'bg-red-500'" 
-             class="h-2 w-2 rounded-full shadow-sm transition-colors duration-500"></div>
+        <div
+          [ngClass]="status()?.bancoEstado ? 'bg-green-500' : 'bg-red-500'"
+          class="h-2 w-2 rounded-full shadow-sm transition-colors duration-500"
+        ></div>
       </div>
     </div>
-    
   </div>
 </header>

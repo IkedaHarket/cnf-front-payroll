@@ -1,4 +1,3 @@
-// src/app/pages/upload-page/upload-page.ts
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal, effect } from '@angular/core';
 import { NotificationService, PayrollService } from '@services/index';
@@ -13,22 +12,25 @@ export class UploadPage {
   private payrollService = inject(PayrollService);
   private notificationService = inject(NotificationService);
 
-  // Exponemos el estado del servicio al template
-  uploadState = this.payrollService.uploadState;
-
-  // Estados locales solo para UI
+  uploadResource = this.payrollService.uploadResource;
   selectedFile = signal<File | null>(null);
   isDragging = signal(false);
 
   constructor() {
-    // Efecto reactivo para notificaciones automáticas según el estado
     effect(() => {
-      const state = this.uploadState();
-      if (state.status === 'success') {
+      const status = this.uploadResource.status();
+      console.log({ status, value: this.uploadResource.value() });
+      if (status === 'resolved' && this.uploadResource.value()) {
         this.notificationService.showSuccess('Nómina procesada exitosamente');
         this.selectedFile.set(null);
-      } else if (state.status === 'error') {
-        this.notificationService.showError(`Error al procesar la nómina: ${state.error}`);
+        this.payrollService.clearState();
+      }
+
+      if (status === 'error') {
+        const error = this.uploadResource.error();
+        if (error) {
+          this.notificationService.showError(`Error: ${error.message}`);
+        }
       }
     });
   }

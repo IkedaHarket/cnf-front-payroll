@@ -2,36 +2,37 @@ import { Injectable, signal } from '@angular/core';
 
 export type ToastType = 'success' | 'error' | 'info';
 
+export interface Toast {
+  id: number;
+  message: string;
+  type: ToastType;
+  isClosing?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  toast = signal<{ message: string; type: ToastType; visible: boolean }>({
-    message: '',
-    type: 'info',
-    visible: false,
-  });
-
-  private timeoutId: any;
+  private _toasts = signal<Toast[]>([]);
+  public readonly toasts = this._toasts.asReadonly();
 
   show(message: string, type: ToastType = 'info') {
-    // Limpiar timer previo para evitar cierres inesperados
-    if (this.timeoutId) clearTimeout(this.timeoutId);
-
-    this.toast.set({ message, type, visible: true });
-
-    this.timeoutId = setTimeout(() => {
-      this.close();
-    }, 4000);
+    const id = Date.now();
+    const newToast: Toast = { id, message, type };
+    this._toasts.update((items) => [...items, newToast]);
+    setTimeout(() => this.remove(id), 8000);
   }
 
   showSuccess(message: string) {
     this.show(message, 'success');
   }
-
   showError(message: string) {
     this.show(message, 'error');
   }
 
-  close() {
-    this.toast.update((current) => ({ ...current, visible: false }));
+  remove(id: number) {
+    this._toasts.update((items) => items.map((t) => (t.id === id ? { ...t, isClosing: true } : t)));
+
+    setTimeout(() => {
+      this._toasts.update((items) => items.filter((t) => t.id !== id));
+    }, 300);
   }
 }

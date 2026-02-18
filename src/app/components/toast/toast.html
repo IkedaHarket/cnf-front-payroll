@@ -1,26 +1,53 @@
+<div class="fixed top-4 right-4 z-[100] flex flex-col gap-3 pointer-events-none">
+  @for (item of toasts(); track item.id) {
+    <div
+      class="pointer-events-auto toast-item"
+      [class.animate-enter]="!item.isClosing"
+      [class.animate-exit]="item.isClosing"
+      [ngClass]="{
+        'bg-green-50 border-green-200 text-green-800': item.type === 'success',
+        'bg-red-50 border-red-200 text-red-800': item.type === 'error',
+        'bg-blue-50 border-blue-200 text-blue-800': item.type === 'info',
+      }"
+      class="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border border-l-4 min-w-[320px]"
+    >
+      @if (item.type === 'success') {
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 13l4 4L19 7"
+          ></path>
+        </svg>
+      } @else if (item.type === 'error') {
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          ></path>
+        </svg>
+      }
 
-@if (toast().visible) {
-      <div class="fixed top-4 right-4 z-[100] animate-slideIn">
-        <div [ngClass]="{
-          'bg-green-50 border-green-200 text-green-800': toast().type === 'success',
-          'bg-red-50 border-red-200 text-red-800': toast().type === 'error',
-          'bg-blue-50 border-blue-200 text-blue-800': toast().type === 'info'
-        }" class="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border border-l-4">
-          
-          <!-- Icons based on type -->
-          @if(toast().type === 'success') {
-             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-          } @else if (toast().type === 'error') {
-             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          }
-
-          <div class="flex-1">
-            <p class="font-medium text-sm">{{ toast().message }}</p>
-          </div>
-          
-          <button (click)="notificationService.close()" class="opacity-50 hover:opacity-100">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
-        </div>
+      <div class="flex-1">
+        <p class="font-medium text-sm leading-tight">{{ item.message }}</p>
       </div>
-    }
+
+      <button
+        (click)="notificationService.remove(item.id)"
+        class="opacity-40 hover:opacity-100 transition-opacity p-1"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </button>
+    </div>
+  }
+</div>
